@@ -1,7 +1,10 @@
+use crate::util::char_to_priority_score;
+
 #[derive(Copy, Clone)]
 pub struct Compartments<'a>(&'a str, &'a str);
 
 impl Compartments<'_> {
+    #[allow(dead_code)] // used in tests
     pub fn from_string<'a> (string: &'a String) -> Compartments<'a>  {
         assert!(string.len() % 2 == 0);
         let halfes = string.split_at(string.len()/2);
@@ -15,14 +18,7 @@ impl Compartments<'_> {
     }
 
     pub fn get_priority(self: &Self) -> Option<u8> {
-        match self.find_duplicated_char() {
-            Some(c) => match c {
-                'a'..='z' => Some((c as u8) - 96),
-                'A'..='Z' => Some((c as u8) - 38),
-                _ => None
-            },
-            None => None
-        }
+        self.find_duplicated_char().map(|c| char_to_priority_score(c).unwrap())
     }
 
     fn find_duplicated_char(self) -> Option<char> {
