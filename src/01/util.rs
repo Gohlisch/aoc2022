@@ -1,11 +1,11 @@
 use std::ops::Add;
 
-pub fn highest_value<T>(value_vector: &mut Vec<T>) -> Option<T> 
+pub fn highest_value<T>(value_vector: &mut Vec<T>) -> Option<&T> 
 where
-    T: Add<Output = T> + Ord + Clone
+    T: Add<Output = T> + Ord
 {
     value_vector.sort_unstable_by(|a, b| b.cmp(a));
-    value_vector.get(0).cloned()
+    value_vector.get(0)
 }
 
 pub fn sum_of_top_3<T>(value_vector: &mut Vec<T>) -> Option<T>
