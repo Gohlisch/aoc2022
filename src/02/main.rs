@@ -53,13 +53,13 @@ fn get_opponent_action_and_outcome(input: &String) -> Vec<(Action, GameOutcome)>
 
 fn get_choice_against_opponent_action_with_target_outcome(opponent_action: &Action, game_outcome: &GameOutcome) -> Action {
     match game_outcome {
-        GameOutcome::WIN => get_winning_choice_againt(opponent_action),
+        GameOutcome::WIN => get_winning_choice_against(opponent_action),
         GameOutcome::DRAW => *opponent_action,
-        GameOutcome::LOSE => get_losing_choice_againt(opponent_action)
+        GameOutcome::LOSE => get_losing_choice_against(opponent_action)
     }
 }
 
-fn get_winning_choice_againt(a: &Action) -> Action {
+fn get_winning_choice_against(a: &Action) -> Action {
     match a {
         Action::ROCK => Action::PAPER,
         Action::PAPER => Action::SCISSORS,
@@ -67,7 +67,7 @@ fn get_winning_choice_againt(a: &Action) -> Action {
     }
 }
 
-fn get_losing_choice_againt(a: &Action) -> Action {
+fn get_losing_choice_against(a: &Action) -> Action {
     match a {
         Action::ROCK => Action::SCISSORS,
         Action::PAPER => Action::ROCK,
@@ -88,15 +88,11 @@ fn game_code_to_actions(game_code: &str) -> Result<(Action, Action), String> {
 fn game_code_to_opponent_action_and_game_outcome(game_code: &str) -> Result<(Action, GameOutcome), String> {
     if let Some(opponent) = game_code.chars().nth(0) {
         if let Some(outcome) = game_code.chars().nth(2) {
-            if let Ok(opponent_action) = Action::from_char(opponent) {
-                if let Ok(game_outcome) = GameOutcome::from_char(outcome) {
-                    return Ok((opponent_action, game_outcome));
-                }
-            }
+            return Ok((Action::from_char(opponent)?, GameOutcome::from_char(outcome)?));
         } 
     } 
     
-    Err(format!("Invalid game code: {}", game_code))
+    Err(format!("Invalid game code format: \"{}\"", game_code))
 }
 
 fn get_selection_score(a: &Action) -> i32 {
