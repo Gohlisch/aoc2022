@@ -6,7 +6,7 @@ pub fn char_to_priority_score(c: char) -> Option<u8> {
     }
 }
 
-pub fn next_three_as_tuple<'a, I, T>(iterator:&mut I) -> Result<(T, T, T), i32> 
+pub fn next_three_as_tuple<I, T>(iterator:&mut I) -> Result<(T, T, T), i32> 
 where
     I: Iterator<Item = T>,
 {
