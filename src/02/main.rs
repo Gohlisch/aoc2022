@@ -5,6 +5,8 @@ fn main() {
     let contents = fs::read_to_string(file_path)
         .expect("Couldn't read input.txt! :(");
 
+    // Part 1
+
     let game_codes = get_game_codes_from_input(&contents);
 
     let scores = game_codes.iter().map(
@@ -14,6 +16,19 @@ fn main() {
     if let Some(scores) = scores {
         println!("Accumulated score: {}", scores);
     }
+
+    // Part 2
+
+    let game_codes_with_outcome = get_opponent_action_and_outcome(&contents);
+
+    let score_with_outcome = game_codes_with_outcome.iter().map(
+        | gc| get_selection_score(&get_choice_against_opponent_action_with_target_outcome(&gc.0, &gc.1)) + get_score_for_outcome(&gc.1)
+    ).reduce(|sum, score| sum+score);
+
+    if let Some(score_with_outcome) = score_with_outcome {
+        println!("Accumulated score: {}", score_with_outcome);
+    }
+
 }
 
 fn get_game_codes_from_input(input: &String) -> Vec<(Action, Action)> {
@@ -26,10 +41,58 @@ fn get_game_codes_from_input(input: &String) -> Vec<(Action, Action)> {
         .collect()
 }
 
+fn get_opponent_action_and_outcome(input: &String) -> Vec<(Action, GameOutcome)> {
+    input.lines()
+        .filter(|l| l.len() >= 3)
+        .map(|l| unsafe{ l.get_unchecked(0..3)} )
+        .map(game_code_to_opponent_action_and_game_outcome)
+        .filter(|res| res.is_ok())
+        .map(|res|res.unwrap())
+        .collect()
+}
+
+fn get_choice_against_opponent_action_with_target_outcome(opponent_action: &Action, game_outcome: &GameOutcome) -> Action {
+    match game_outcome {
+        GameOutcome::WIN => get_winning_choice_againt(opponent_action),
+        GameOutcome::DRAW => *opponent_action,
+        GameOutcome::LOSE => get_losing_choice_againt(opponent_action)
+    }
+}
+
+fn get_winning_choice_againt(a: &Action) -> Action {
+    match a {
+        Action::ROCK => Action::PAPER,
+        Action::PAPER => Action::SCISSORS,
+        Action::SCISSORS => Action::ROCK
+    }
+}
+
+fn get_losing_choice_againt(a: &Action) -> Action {
+    match a {
+        Action::ROCK => Action::SCISSORS,
+        Action::PAPER => Action::ROCK,
+        Action::SCISSORS => Action::PAPER
+    }
+}
+
 fn game_code_to_actions(game_code: &str) -> Result<(Action, Action), String> {  
     if let Some(opponent) = game_code.chars().nth(0) {
         if let Some(own) = game_code.chars().nth(2) {
             return Action::from_chars(opponent, own);
+        } 
+    } 
+    
+    Err(format!("Invalid game code: {}", game_code))
+}
+
+fn game_code_to_opponent_action_and_game_outcome(game_code: &str) -> Result<(Action, GameOutcome), String> {
+    if let Some(opponent) = game_code.chars().nth(0) {
+        if let Some(outcome) = game_code.chars().nth(2) {
+            if let Ok(opponent_action) = Action::from_char(opponent) {
+                if let Ok(game_outcome) = GameOutcome::from_char(outcome) {
+                    return Ok((opponent_action, game_outcome));
+                }
+            }
         } 
     } 
     
@@ -44,38 +107,62 @@ fn get_selection_score(a: &Action) -> i32 {
     }
 }
 
-fn get_round_score(opponent: &Action, own: &Action) -> i32 {
-    let win_score = 6;
-    let draw_score = 3;
-    let lose_score = 0;
+const WIN_SCORE: i32 = 6;
+const DRAW_SCORE: i32 = 3;
+const LOSE_SCORE: i32 = 0;
 
+fn get_round_score(opponent: &Action, own: &Action) -> i32 {
     match opponent {
         Action::ROCK => match own {
-            Action::ROCK => draw_score,
-            Action::PAPER => win_score,
-            Action::SCISSORS => lose_score,
+            Action::ROCK => DRAW_SCORE,
+            Action::PAPER => WIN_SCORE,
+            Action::SCISSORS => LOSE_SCORE,
         },
         Action::PAPER => match own {
-            Action::ROCK => lose_score,
-            Action::PAPER => draw_score,
-            Action::SCISSORS => win_score,
+            Action::ROCK => LOSE_SCORE,
+            Action::PAPER => DRAW_SCORE,
+            Action::SCISSORS => WIN_SCORE,
         },
         Action::SCISSORS => match own {
-            Action::ROCK => win_score,
-            Action::PAPER => lose_score,
-            Action::SCISSORS => draw_score,
+            Action::ROCK => WIN_SCORE,
+            Action::PAPER => LOSE_SCORE,
+            Action::SCISSORS => DRAW_SCORE,
         },
     }
-    
 }
 
+fn get_score_for_outcome(outcome: &GameOutcome) -> i32 {
+    match outcome {
+        GameOutcome::WIN => WIN_SCORE,
+        GameOutcome::DRAW => DRAW_SCORE,
+        GameOutcome::LOSE => LOSE_SCORE
+    }
+}
+
+#[derive(Copy, Clone)]
 enum Action {
     ROCK,
     PAPER,
     SCISSORS
 }
 
+#[derive(Copy, Clone)]
+enum GameOutcome {
+    WIN,
+    DRAW,
+    LOSE
+}
+
 impl Action {
+    pub fn from_char(c: char) -> Result<Action, String> {
+        match c {
+            'A' | 'X' => Ok(Action::ROCK),
+            'B' | 'Y' => Ok(Action::PAPER),
+            'C' | 'Z' => Ok(Action::SCISSORS),
+            _ => return Err(format!("Invalid action char: {}", c))
+        }
+    }
+
     pub fn from_chars(opponent: char, own: char) -> Result<(Action, Action), String> {
         let opponent_action = match opponent {
             'A' => Action::ROCK,
@@ -94,9 +181,20 @@ impl Action {
     }
 }
 
+impl GameOutcome {
+    pub fn from_char(c: char) -> Result<GameOutcome, String> {
+        match c {
+            'X' => Ok(GameOutcome::LOSE),
+            'Y' => Ok(GameOutcome::DRAW),
+            'Z' => Ok(GameOutcome::WIN),
+            _ => return Err(format!("Invalid game outcome char: {}", c))
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{Action, get_selection_score, get_round_score, get_game_codes_from_input};
+    use crate::{Action, get_selection_score, get_round_score, get_game_codes_from_input, get_opponent_action_and_outcome};
 
     #[test]
     fn returns_game_codes_as_vector() {
@@ -106,6 +204,26 @@ mod tests {
 
         assert_eq!(game_codes.len(), 3);
         assert!(matches!(game_codes.get(0).unwrap().0, Action::ROCK));
+        assert!(matches!(game_codes.get(0).unwrap().1, Action::PAPER));
+        assert!(matches!(game_codes.get(1).unwrap().0, Action::PAPER));
+        assert!(matches!(game_codes.get(1).unwrap().1, Action::ROCK));
+        assert!(matches!(game_codes.get(2).unwrap().0, Action::SCISSORS));
+        assert!(matches!(game_codes.get(2).unwrap().1, Action::SCISSORS));
+    }
+
+    #[test]
+    fn returns_game_codes_with_target_outcome_as_vector() {
+        let input = String::from("A Y\nB X\nC Z");
+
+        let game_codes = get_opponent_action_and_outcome(&input);
+
+        assert_eq!(game_codes.len(), 3);
+        assert!(matches!(game_codes.get(0).unwrap().0, Action::ROCK));
+        assert!(matches!(game_codes.get(0).unwrap().1, crate::GameOutcome::DRAW));
+        assert!(matches!(game_codes.get(1).unwrap().0, Action::PAPER));
+        assert!(matches!(game_codes.get(1).unwrap().1, crate::GameOutcome::LOSE));
+        assert!(matches!(game_codes.get(2).unwrap().0, Action::SCISSORS));
+        assert!(matches!(game_codes.get(2).unwrap().1, crate::GameOutcome::WIN));
     }
 
     #[test]
