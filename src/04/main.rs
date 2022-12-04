@@ -9,14 +9,23 @@ fn main() {
     let input = fs::read_to_string(file_path)
         .expect("Couldn't read input.txt! :(");
 
-    let ranges_containing_each_other = input.lines()
-        .map(str_to_ranges)
-        .filter(|option| option.is_some())
-        .map(|option| option.unwrap())
-        .filter(|ranges| ranges.0.includes(&ranges.1) || ranges.1.includes(&ranges.0))
-        .count();
+        let ranges_containing_each_other = input.lines()
+            .map(str_to_ranges)
+            .filter(|option| option.is_some())
+            .map(|option| option.unwrap())
+            .filter(|ranges| ranges.0.includes(&ranges.1) || ranges.1.includes(&ranges.0))
+            .count();
+    
+        println!("{} ranges contain each other.", ranges_containing_each_other);
 
-    println!("{} ranges contain each other.", ranges_containing_each_other);
+        let ranges_overlapping_with_each_other = input.lines()
+            .map(str_to_ranges)
+            .filter(|option| option.is_some())
+            .map(|option| option.unwrap())
+            .filter(|ranges| ranges.0.overlaps_with(&ranges.1))
+            .count();
+    
+        println!("{} ranges overlap with each other.", ranges_overlapping_with_each_other);
 }
 
 fn str_to_ranges(str: &str) -> Option<(Range, Range)> {
