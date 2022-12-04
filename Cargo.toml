@@ -127,3 +127,4 @@ test = false
 bench = false
 
 [dependencies]
+regex = "1"
