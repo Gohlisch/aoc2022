@@ -1,4 +1,4 @@
-use std::{collections::LinkedList, fs};
+use std::{fs};
 
 use regex::Regex;
 
@@ -6,11 +6,56 @@ fn main() {
     let file_path = "src/05/input.txt";
     let input = fs::read_to_string(file_path)
         .expect("Couldn't read input.txt! :(");
-    input_to_stacks(input.as_str());
+
+    // part 1
+    let mut stacks = input_to_stacks(input.as_str());
+    let mut commands = input.lines()
+                                                        .map(str_to_commands)
+                                                        .filter(|option| option.is_some())
+                                                        .map(|option| option.unwrap());
+    execute_commands_on_stacks(commands, &mut stacks);
+    for stack in stacks {
+        print!("{}", stack[stack.len()-1]);
+    }
+    print!("\n");
+
+    // part 2
+    let mut stacks = input_to_stacks(input.as_str());
+    let mut commands = input.lines()
+                                                        .map(str_to_commands)
+                                                        .filter(|option| option.is_some())
+                                                        .map(|option| option.unwrap());
+    execute_commands_on_stacks_retain_order(commands, &mut stacks);
+    for stack in stacks {
+        print!("{}", stack[stack.len()-1]);
+    }
+    print!("\n");
 }
 
-type Command = (i32, i32, i32);
+type Command = (usize, usize, usize);
 type Identifier = char;
+
+fn execute_commands_on_stacks(commands: impl Iterator<Item = Command>, stacks: &mut  Vec<Vec<Identifier>>) {
+    for (amount, from, to) in commands {
+        for _ in 0..amount  {
+            let val = stacks[from-1].pop().unwrap();
+            stacks[to-1].push(val);
+        }
+    }
+}
+
+fn execute_commands_on_stacks_retain_order(commands: impl Iterator<Item = Command>, stacks: &mut  Vec<Vec<Identifier>>) {
+    for (amount, from, to) in commands {
+        for i in stacks[from-1].len()-amount .. stacks[from-1].len() {
+            let val = stacks[from-1][i];
+            stacks[to-1].push(val);
+        }
+
+        for i in 0..amount {
+            stacks[from-1].pop();
+        }
+    }
+}
 
 fn str_to_commands(line: &str) -> Option<Command> {
     let re = Regex::new(r"move (\d+) from (\d+) to (\d+)").unwrap();
@@ -148,5 +193,16 @@ move 1 from 1 to 2";
         let c = stack_input_to_char(captured_group);
 
         assert!(c.is_none());
+    }
+
+    #[test]
+    fn parses_command() {
+        let input_line = "move 1 from 2 to 3";
+
+        let command = str_to_commands(input_line).unwrap();
+
+        assert_eq!(command.0, 1);
+        assert_eq!(command.1, 2);
+        assert_eq!(command.2, 3);
     }
 }
