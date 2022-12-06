@@ -5,43 +5,43 @@ fn main() {
     let input = fs::read_to_string(file_path)
         .expect("Couldn't read input.txt! :(");
         
-    println!("First marker appears at {}", four_prior_are_different(input.as_str()));
+        println!("First start-of-packet-marker appears at {}", n_prior_are_different(input.as_str(), 4));
+        
+        println!("First start-of-message-marker appears at {}", n_prior_are_different(input.as_str(), 14));
 }
 
-fn four_prior_are_different(input: &str) -> usize {
-    assert!(input.len() > 4);
-    for current in 4..input.len() {
-        let four_prior = &input[current-4..current];
-        if !contains_duplicates(four_prior) {
+fn n_prior_are_different(input: &str, n: usize) -> usize {
+    assert!(input.len() > n);
+    for current in n .. input.len() {
+        let n_prior = &input[current-n..current];
+        if !contains_duplicates(n_prior) {
             return current;
         }
     }
-
     panic!("No marker found!")
 }
 
 fn contains_duplicates(s: &str) -> bool {
     for c1 in s.chars() {
         let occurences = s.chars()
-                                    .filter(|c2| c2 == &c1)
-                                    .count();
+                                 .filter(|c2| c2 == &c1)
+                                 .count();
         if occurences > 1 {
             return true;
         }
     }
-
-    return false;
+    false
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{contains_duplicates, four_prior_are_different};
+    use crate::{contains_duplicates, n_prior_are_different};
 
     #[test]
-    fn it_works() {
+    fn four_prior_are_different() {
         let input = "bvwbjplbgvbhsrlpgdmjqwftvncz";
 
-        let result = four_prior_are_different(input);
+        let result = n_prior_are_different(input, 4);
 
         assert_eq!(result, 5);
     }
@@ -63,4 +63,5 @@ mod tests {
             assert!(!contains_duplicates(string_with_duplicate_chars));
         }
     }
+    
 }
