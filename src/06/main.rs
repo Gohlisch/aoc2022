@@ -13,7 +13,7 @@ fn main() {
 fn n_prior_are_different(input: &str, n: usize) -> usize {
     assert!(input.len() > n);
     for current in n .. input.len() {
-        let n_prior = &input[current-n..current];
+        let n_prior = &input[current-n .. current];
         if !contains_duplicates(n_prior) {
             return current;
         }
